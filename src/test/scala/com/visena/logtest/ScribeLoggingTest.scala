@@ -1,10 +1,10 @@
 package com.visena.logtest
 
 import no.officenet.crank.ScribeCranker
-import org.pushwagner.foo.ScribeOutsideValidPackagesNonCranker
+import org.pushwagner.foo.{ScribeOutsideValidPackagesNonCranker, ScribeScreamer}
 import org.testng.annotations.{BeforeClass, Test}
 import scribe.Level
-import scribe.filter.{packageName, select}
+import scribe.filter.{className, level, packageName, select}
 import scribe.writer.ConsoleWriter
 
 @Test
@@ -21,7 +21,8 @@ class ScribeLoggingTest extends Loggable {
 			.withModifier(
 				select(packageName.startsWith("no.officenet")
 					, packageName.startsWith("com.visena")
-				).minimumLevel(Level.Info))
+				).boosted(Level.Debug, Level.Info))
+			.withModifier(select(className(classOf[ScribeScreamer].getName)).include(level >= Level.Error))
 			.replace()
 	}
 
@@ -29,6 +30,7 @@ class ScribeLoggingTest extends Loggable {
 		trace("Starting test") // This should be printed out to stdout with TRACE
 		new ScribeCranker().doCrank() // Should print TRACE and INFO messages
 		new ScribeOutsideValidPackagesNonCranker().dontCrank() // Should only print INFO
+		new ScribeScreamer().scream()
 	}
 
 }

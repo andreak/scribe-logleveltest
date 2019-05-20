@@ -6,6 +6,7 @@ class ScribeCranker extends Loggable {
 
 	def doCrank(): Unit = {
 		trace("Entering doCrank...")
+		debug("Preparing...")
 		info("Crank it up!")
 	}
 }
