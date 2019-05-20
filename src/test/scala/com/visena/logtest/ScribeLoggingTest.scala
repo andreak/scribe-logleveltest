@@ -21,7 +21,7 @@ class ScribeLoggingTest extends Loggable {
 			.withModifier(
 				select(packageName.startsWith("no.officenet")
 					, packageName.startsWith("com.visena")
-				).minimumLevel(Level.Trace))
+				).minimumLevel(Level.Info))
 			.replace()
 	}
 
