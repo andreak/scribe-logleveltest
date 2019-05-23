@@ -1,29 +1,43 @@
 package com.visena.logtest
 
+import java.nio.file.Paths
+
 import no.officenet.crank.ScribeCranker
 import org.pushwagner.foo.{ScribeOutsideValidPackagesNonCranker, ScribeScreamer}
 import org.testng.annotations.{BeforeClass, Test}
-import scribe.Level
-import scribe.filter.{className, level, packageName, select}
-import scribe.writer.ConsoleWriter
+import scribe.filter.{packageName, select}
+import scribe.handler.LogHandler
+import scribe.writer.file.LogPath
+import scribe.writer.{ConsoleWriter, FileWriter}
+import scribe.{Level, Logger}
 
 @Test
 class ScribeLoggingTest extends Loggable {
 
 	@BeforeClass
 	def beforeClass(): Unit = {
-		scribe.Logger.root
+		val moduleName = "logtest"
+
+		val consoleHandler = LogHandler(minimumLevel = Some(Level.Info), writer = ConsoleWriter)
+		val traceHandler = LogHandler(
+			minimumLevel = Some(Level.Info),
+			writer = FileWriter()
+				.path(_ => Paths.get(System.getProperty("user.home"),"logs", moduleName, "trace.log"))
+				.rolling(LogPath.daily(prefix = "trace"
+					, directory = Paths.get(System.getProperty("user.home"), "logs", moduleName))
+				).autoFlush
+		).withModifier(
+			select(
+				packageName.startsWith("no.officenet"),
+				packageName.startsWith("com.visena")
+			).boosted(Level.Trace, Level.Info)
+		)
+
+		Logger.root
 			.clearHandlers()
 			.clearModifiers()
-			.withHandler(minimumLevel = Some(Level.Info)
-				, writer = ConsoleWriter
-			)
-			.withModifier(
-				select(packageName.startsWith("no.officenet")
-					, packageName.startsWith("com.visena")
-				).boosted(Level.Debug, Level.Info))
-			.withModifier(select(className(classOf[ScribeScreamer].getName)).include(level >= Level.Error))
-			.replace()
+			.withHandler(consoleHandler)
+			.withHandler(traceHandler).replace()
 	}
 
 	def testPackageFiltering(): Unit = {
