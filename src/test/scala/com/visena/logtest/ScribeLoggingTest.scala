@@ -38,7 +38,6 @@ class ScribeLoggingTest extends Loggable {
 		)
 
 		val warnHandler = LogHandler(
-			minimumLevel = Some(Level.Warn),
 			writer = FileWriter()
 				.path(_ => Paths.get(System.getProperty("user.home"),"logs", moduleName, "warn.log"))
 				.rolling(LogPath.daily(prefix = "warn"
@@ -48,7 +47,7 @@ class ScribeLoggingTest extends Loggable {
 			select(
 				packageName.startsWith("no.officenet"),
 				packageName.startsWith("com.visena")
-			).include(level <= Level.Warn).excludeUnselected
+			).exclude(level < Level.Warn).exclude(level > Level.Warn).excludeUnselected
 		)
 
 		val errorHandler = LogHandler(
