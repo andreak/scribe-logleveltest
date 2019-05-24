@@ -8,5 +8,7 @@ class ScribeCranker extends Loggable {
 		trace("Entering doCrank...")
 		debug("Preparing...")
 		info("Crank it up!")
+		warn("Warning!!!")
+		error("Error!!!")
 	}
 }

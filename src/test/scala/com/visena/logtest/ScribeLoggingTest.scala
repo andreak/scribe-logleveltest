@@ -5,11 +5,11 @@ import java.nio.file.Paths
 import no.officenet.crank.ScribeCranker
 import org.pushwagner.foo.{ScribeOutsideValidPackagesNonCranker, ScribeScreamer}
 import org.testng.annotations.{BeforeClass, Test}
-import scribe.filter.{packageName, select}
+import scribe.filter.{packageName, className, level, select}
 import scribe.handler.LogHandler
 import scribe.writer.file.LogPath
 import scribe.writer.{ConsoleWriter, FileWriter}
-import scribe.{Level, Logger}
+import scribe.{Level, Logger, Priority}
 
 @Test
 class ScribeLoggingTest extends Loggable {
@@ -30,14 +30,44 @@ class ScribeLoggingTest extends Loggable {
 			select(
 				packageName.startsWith("no.officenet"),
 				packageName.startsWith("com.visena")
-			).boosted(Level.Trace, Level.Info)
+			).boosted(Level.Trace, Level.Info).priority(Priority.Important)
+		).withModifier(
+			select(
+				className(classOf[ScribeScreamer].getName)
+			).include(level >= Level.Error)
+		)
+
+		val warnHandler = LogHandler(
+			minimumLevel = Some(Level.Warn),
+			writer = FileWriter()
+				.path(_ => Paths.get(System.getProperty("user.home"),"logs", moduleName, "warn.log"))
+				.rolling(LogPath.daily(prefix = "warn"
+					, directory = Paths.get(System.getProperty("user.home"), "logs", moduleName))
+				).autoFlush
+		).withModifier(
+			select(
+				packageName.startsWith("no.officenet"),
+				packageName.startsWith("com.visena")
+			).include(level <= Level.Warn).excludeUnselected
+		)
+
+		val errorHandler = LogHandler(
+			minimumLevel = Some(Level.Error),
+			writer = FileWriter()
+				.path(_ => Paths.get(System.getProperty("user.home"),"logs", moduleName, "error.log"))
+				.rolling(LogPath.daily(prefix = "error"
+					, directory = Paths.get(System.getProperty("user.home"), "logs", moduleName))
+				).autoFlush
 		)
 
 		Logger.root
 			.clearHandlers()
 			.clearModifiers()
 			.withHandler(consoleHandler)
-			.withHandler(traceHandler).replace()
+			.withHandler(traceHandler)
+			.withHandler(warnHandler)
+			.withHandler(errorHandler)
+			.replace()
 	}
 
 	def testPackageFiltering(): Unit = {
